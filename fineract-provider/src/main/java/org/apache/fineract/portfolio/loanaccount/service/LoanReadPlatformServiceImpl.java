@@ -1191,6 +1191,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService, Loa
             totalOutstanding = totalOutstanding.plus(disbursementPeriod.getFeeChargesDue()).minus(disbursementPeriod.getFeeChargesPaid());
 
             Integer loanTermInDays = 0;
+            boolean isDisbursementPeriodAlreadyAdded = false;
             while (rs.next()) {
 
                 final Long loanId = rs.getLong("loanId");
@@ -1203,7 +1204,8 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService, Loa
                 BigDecimal principal = BigDecimal.ZERO;
                 if (!isAdditional) {
                     for (final DisbursementData data : disbursementData) {
-                        if (fromDate.equals(this.disbursement.disbursementDate()) && data.disbursementDate().equals(fromDate)) {
+                        if (fromDate.equals(this.disbursement.disbursementDate()) && data.disbursementDate().equals(fromDate)
+                                && !isDisbursementPeriodAlreadyAdded) {
                             principal = principal.add(data.getPrincipal());
                             LoanSchedulePeriodData periodData = null;
                             if (data.getChargeAmount() == null) {
@@ -1216,6 +1218,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService, Loa
                             }
                             periods.add(periodData);
                             this.outstandingLoanPrincipalBalance = this.outstandingLoanPrincipalBalance.add(data.getPrincipal());
+                            isDisbursementPeriodAlreadyAdded = true;
                         } else if (data.isDueForDisbursement(fromDate, dueDate)) {
                             if (!excludePastUndisbursed || data.isDisbursed()
                                     || !data.disbursementDate().isBefore(DateUtils.getBusinessLocalDate())) {
